@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Static Site on AWS via GitLab CI/CD</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Deployed via GitLab CI/CD → AWS S3 + CloudFront</h1>
+    <p>
+      This page is built, tested, and deployed automatically by a GitLab
+      pipeline. Every push to <code>main</code> syncs this site to a private
+      S3 bucket and invalidates the CloudFront cache.
+    </p>
+    <p>Build: <span id="build-info">local</span></p>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

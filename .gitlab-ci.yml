@@ -1,0 +1,53 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  SITE_DIR: site
+  BUILD_DIR: public
+  AWS_REGION: us-east-1
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - npx --yes html-validate "$SITE_DIR/**/*.html"
+    - mkdir -p "$BUILD_DIR"
+    - cp -r "$SITE_DIR"/* "$BUILD_DIR"/
+  artifacts:
+    paths:
+      - $BUILD_DIR
+    expire_in: 1 hour
+
+test:
+  stage: test
+  image: node:20-alpine
+  needs: ["build"]
+  script:
+    - npx --yes linkinator "$BUILD_DIR" --recurse --silent
+
+deploy:
+  stage: deploy
+  image: amazon/aws-cli:2.17.62
+  needs: ["test"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  environment:
+    name: production
+    url: https://$CLOUDFRONT_DOMAIN_NAME
+  before_script:
+    - export AWS_WEB_IDENTITY_TOKEN_FILE="$(pwd)/gitlab_oidc_token.jwt"
+    - echo "$GITLAB_OIDC_TOKEN" > "$AWS_WEB_IDENTITY_TOKEN_FILE"
+    - export AWS_ROLE_SESSION_NAME="gitlab-ci-${CI_PIPELINE_ID}"
+  script:
+    - aws s3 sync "$BUILD_DIR" "s3://${S3_BUCKET}" --delete
+    - aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
