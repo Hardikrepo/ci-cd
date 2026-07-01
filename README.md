@@ -1,7 +1,7 @@
 # ci-cd — Static Site, GitHub Actions → AWS
 
 [![Build, Test, Deploy Static Site](https://github.com/Hardikrepo/ci-cd/actions/workflows/deploy.yml/badge.svg)](https://github.com/Hardikrepo/ci-cd/actions/workflows/deploy.yml)
-**Live:** [d1lmh2q9zjh8hr.cloudfront.net](https://d1lmh2q9zjh8hr.cloudfront.net)
+**Live:** [d1lmh2q9zjh8hr.cloudfront.net](https://d1lmh2q9zjh8hr.cloudfront.net) This URL is not active
 
 Push to `main`. Three GitHub Actions jobs run — **build**, **test**,
 **deploy** — and the site is live on CloudFront a few seconds later. No AWS
