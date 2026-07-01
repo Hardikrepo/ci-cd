@@ -1,0 +1,76 @@
+<svg viewBox="0 0 1320 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Push to main to live on CloudFront pipeline</title>
+  <desc id="desc">Push to main, Build lints and packages the site, Test checks links, Deploy assumes an AWS role via OIDC, S3 stores the private bucket, CloudFront serves it over HTTPS.</desc>
+  <defs>
+    <linearGradient id="badge-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5268"/>
+    </marker>
+  </defs>
+
+  <rect width="1320" height="220" fill="none"/>
+
+  <!-- connectors -->
+  <line x1="211.5" y1="100" x2="228.5" y2="100" stroke="#4a5268" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="431.5" y1="100" x2="448.5" y2="100" stroke="#4a5268" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="651.5" y1="100" x2="668.5" y2="100" stroke="#4a5268" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="871.5" y1="100" x2="888.5" y2="100" stroke="#4a5268" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1091.5" y1="100" x2="1108.5" y2="100" stroke="#4a5268" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- node 1: Push -->
+  <g>
+    <rect x="12.5" y="40" width="195" height="120" rx="14" fill="#12161f" stroke="#232838" stroke-width="1.5"/>
+    <circle cx="40.5" cy="68" r="16" fill="url(#badge-grad)"/>
+    <text x="40.5" y="73" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#08090c">1</text>
+    <text x="32.5" y="108" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#e7e9ee">Push</text>
+    <text x="32.5" y="130" font-family="Segoe UI, sans-serif" font-size="12" fill="#9399a8">git push → main</text>
+  </g>
+
+  <!-- node 2: Build -->
+  <g>
+    <rect x="232.5" y="40" width="195" height="120" rx="14" fill="#12161f" stroke="#232838" stroke-width="1.5"/>
+    <circle cx="260.5" cy="68" r="16" fill="url(#badge-grad)"/>
+    <text x="260.5" y="73" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#08090c">2</text>
+    <text x="252.5" y="108" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#e7e9ee">Build</text>
+    <text x="252.5" y="130" font-family="Segoe UI, sans-serif" font-size="12" fill="#9399a8">html-validate + pack</text>
+  </g>
+
+  <!-- node 3: Test -->
+  <g>
+    <rect x="452.5" y="40" width="195" height="120" rx="14" fill="#12161f" stroke="#232838" stroke-width="1.5"/>
+    <circle cx="480.5" cy="68" r="16" fill="url(#badge-grad)"/>
+    <text x="480.5" y="73" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#08090c">3</text>
+    <text x="472.5" y="108" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#e7e9ee">Test</text>
+    <text x="472.5" y="130" font-family="Segoe UI, sans-serif" font-size="12" fill="#9399a8">linkinator link check</text>
+  </g>
+
+  <!-- node 4: Deploy -->
+  <g>
+    <rect x="672.5" y="40" width="195" height="120" rx="14" fill="#12161f" stroke="#232838" stroke-width="1.5"/>
+    <circle cx="700.5" cy="68" r="16" fill="url(#badge-grad)"/>
+    <text x="700.5" y="73" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#08090c">4</text>
+    <text x="692.5" y="108" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#e7e9ee">Deploy</text>
+    <text x="692.5" y="130" font-family="Segoe UI, sans-serif" font-size="12" fill="#9399a8">assume role via OIDC</text>
+  </g>
+
+  <!-- node 5: S3 -->
+  <g>
+    <rect x="892.5" y="40" width="195" height="120" rx="14" fill="#12161f" stroke="#232838" stroke-width="1.5"/>
+    <circle cx="920.5" cy="68" r="16" fill="url(#badge-grad)"/>
+    <text x="920.5" y="73" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#08090c">5</text>
+    <text x="912.5" y="108" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#e7e9ee">S3</text>
+    <text x="912.5" y="130" font-family="Segoe UI, sans-serif" font-size="12" fill="#9399a8">private, synced</text>
+  </g>
+
+  <!-- node 6: CloudFront -->
+  <g>
+    <rect x="1112.5" y="40" width="195" height="120" rx="14" fill="#12161f" stroke="rgba(34,211,238,0.4)" stroke-width="1.5"/>
+    <circle cx="1140.5" cy="68" r="16" fill="url(#badge-grad)"/>
+    <text x="1140.5" y="73" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#08090c">6</text>
+    <text x="1132.5" y="108" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#e7e9ee">CloudFront</text>
+    <text x="1132.5" y="130" font-family="Segoe UI, sans-serif" font-size="12" fill="#9399a8">HTTPS, cached, live</text>
+  </g>
+</svg>
