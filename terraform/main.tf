@@ -60,6 +60,14 @@ resource "aws_cloudfront_distribution" "site" {
     response_page_path = "/404.html"
   }
 
+  # The bucket policy grants CloudFront GetObject but not ListBucket, so S3
+  # returns 403 (not 404) for missing keys -- route that to the same page.
+  custom_error_response {
+    error_code         = 403
+    response_code      = 404
+    response_page_path = "/404.html"
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
