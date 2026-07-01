@@ -9,14 +9,8 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "gitlab_oidc_url" {
-  description = "GitLab OIDC issuer URL (use https://gitlab.com, or your self-managed instance URL)"
-  type        = string
-  default     = "https://gitlab.com"
-}
-
-variable "gitlab_project_path" {
-  description = "GitLab project path allowed to assume the deploy role, e.g. \"my-group/my-static-site\""
+variable "github_repository" {
+  description = "GitHub \"owner/repo\" allowed to assume the deploy role, e.g. \"Hardikrepo/ci-cd\""
   type        = string
 }
 

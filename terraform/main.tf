@@ -97,47 +97,52 @@ resource "aws_s3_bucket_policy" "site" {
   policy = data.aws_iam_policy_document.site.json
 }
 
-# --- GitLab OIDC provider, so CI never stores static AWS keys ---
+# --- GitHub Actions OIDC provider, so CI never stores static AWS keys ---
 
-data "tls_certificate" "gitlab" {
-  url = var.gitlab_oidc_url
+locals {
+  github_oidc_url  = "https://token.actions.githubusercontent.com"
+  github_oidc_host = "token.actions.githubusercontent.com"
 }
 
-resource "aws_iam_openid_connect_provider" "gitlab" {
-  url             = var.gitlab_oidc_url
-  client_id_list  = [var.gitlab_oidc_url]
-  thumbprint_list = [data.tls_certificate.gitlab.certificates[0].sha1_fingerprint]
+data "tls_certificate" "github" {
+  url = local.github_oidc_url
 }
 
-# --- IAM role assumable only by this GitLab project on the allowed branch ---
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = local.github_oidc_url
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
+}
 
-data "aws_iam_policy_document" "gitlab_trust" {
+# --- IAM role assumable only by this GitHub repo on the allowed branch ---
+
+data "aws_iam_policy_document" "github_trust" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.gitlab.arn]
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
     }
 
     condition {
       test     = "StringEquals"
-      variable = "${replace(var.gitlab_oidc_url, "https://", "")}:aud"
-      values   = [var.gitlab_oidc_url]
+      variable = "${local.github_oidc_host}:aud"
+      values   = ["sts.amazonaws.com"]
     }
 
     condition {
-      test     = "StringLike"
-      variable = "${replace(var.gitlab_oidc_url, "https://", "")}:sub"
-      values   = ["project_path:${var.gitlab_project_path}:ref_type:branch:ref:${var.allowed_ref}"]
+      test     = "StringEquals"
+      variable = "${local.github_oidc_host}:sub"
+      values   = ["repo:${var.github_repository}:ref:refs/heads/${var.allowed_ref}"]
     }
   }
 }
 
 resource "aws_iam_role" "deploy" {
-  name               = "${replace(var.bucket_name, ".", "-")}-gitlab-deploy"
-  assume_role_policy = data.aws_iam_policy_document.gitlab_trust.json
+  name               = "${replace(var.bucket_name, ".", "-")}-github-deploy"
+  assume_role_policy = data.aws_iam_policy_document.github_trust.json
 }
 
 data "aws_iam_policy_document" "deploy_permissions" {
