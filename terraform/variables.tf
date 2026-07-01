@@ -14,8 +14,8 @@ variable "github_repository" {
   type        = string
 }
 
-variable "allowed_ref" {
-  description = "Git branch allowed to assume the deploy role and publish to prod"
+variable "github_environment" {
+  description = "GitHub Actions environment name used by the deploy job (changes the OIDC sub claim to repo:OWNER/REPO:environment:NAME)"
   type        = string
-  default     = "main"
+  default     = "production"
 }

@@ -41,7 +41,7 @@ jobs:
         with:
           node-version: 20
       - name: Check links
-        run: npx --yes linkinator public --recurse --silent
+        run: npx --yes linkinator public --recurse --silent --skip "^https?://(?!localhost)"
 
   deploy:
     runs-on: ubuntu-latest

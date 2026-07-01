@@ -3,19 +3,159 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Static Site on AWS via GitLab CI/CD</title>
+  <title>CI/CD → AWS · GitHub Actions to S3 + CloudFront</title>
+  <meta name="description" content="A GitHub Actions pipeline that builds, tests, and deploys a static site to a private S3 bucket behind CloudFront, authenticating to AWS via OIDC — no stored keys.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <h1>Deployed via GitLab CI/CD → AWS S3 + CloudFront</h1>
-    <p>
-      This page is built, tested, and deployed automatically by a GitLab
-      pipeline. Every push to <code>main</code> syncs this site to a private
-      S3 bucket and invalidates the CloudFront cache.
-    </p>
-    <p>Build: <span id="build-info">local</span></p>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark" aria-hidden="true"></span>
+        ci-cd
+      </a>
+      <nav class="nav-links">
+        <a href="#pipeline">Pipeline</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#features">Features</a>
+        <a href="#stack">Stack</a>
+        <a class="nav-cta" href="https://github.com/Hardikrepo/ci-cd">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <p class="eyebrow">GitHub Actions &rarr; AWS</p>
+      <h1>Push to <code>main</code>.<br>Live on CloudFront in minutes.</h1>
+      <p class="hero-sub">
+        A build &rarr; test &rarr; deploy pipeline for static sites. Every
+        deploy authenticates to AWS through short-lived OIDC credentials —
+        no access keys ever stored in GitHub.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/Hardikrepo/ci-cd">View source</a>
+        <a class="btn btn-ghost" href="#architecture">See how it works</a>
+      </div>
+      <div class="hero-badges">
+        <span class="badge badge-live"><span class="dot"></span> Live on CloudFront</span>
+        <span class="badge">Zero static AWS keys</span>
+        <span class="badge">Infra as code</span>
+      </div>
+    </section>
+
+    <section id="pipeline" class="section">
+      <h2>Three jobs, one push</h2>
+      <p class="section-sub">Every commit to <code>main</code> runs the same three-stage workflow.</p>
+
+      <ol class="pipeline">
+        <li class="pipeline-step">
+          <div class="pipeline-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v4H4zM4 10h10v10H4zM16 10h4v10h-4z"/></svg>
+          </div>
+          <h3>Build</h3>
+          <p>Lint every HTML file with <code>html-validate</code>, then assemble the output into a versioned artifact.</p>
+        </li>
+        <li class="pipeline-arrow" aria-hidden="true">&rarr;</li>
+        <li class="pipeline-step">
+          <div class="pipeline-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 12l2 2 4-4M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z"/></svg>
+          </div>
+          <h3>Test</h3>
+          <p>Crawl the built artifact with <code>linkinator</code> and fail the run on any broken internal link.</p>
+        </li>
+        <li class="pipeline-arrow" aria-hidden="true">&rarr;</li>
+        <li class="pipeline-step">
+          <div class="pipeline-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+          </div>
+          <h3>Deploy</h3>
+          <p>Assume an AWS role via OIDC, sync to S3, and invalidate the CloudFront cache. Main branch only.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="architecture" class="section">
+      <h2>Request path</h2>
+      <p class="section-sub">The bucket is private end to end — CloudFront is the only thing that can read it.</p>
+
+      <div class="diagram">
+        <div class="diagram-node">
+          <span class="diagram-label">GitHub Actions</span>
+          <span class="diagram-detail">OIDC token, no keys</span>
+        </div>
+        <div class="diagram-connector" aria-hidden="true">
+          <span>AssumeRoleWithWebIdentity</span>
+        </div>
+        <div class="diagram-node">
+          <span class="diagram-label">IAM Role</span>
+          <span class="diagram-detail">Scoped to repo + environment</span>
+        </div>
+        <div class="diagram-connector" aria-hidden="true">
+          <span>s3 sync --delete</span>
+        </div>
+        <div class="diagram-node">
+          <span class="diagram-label">S3 (private)</span>
+          <span class="diagram-detail">All public access blocked</span>
+        </div>
+        <div class="diagram-connector" aria-hidden="true">
+          <span>Origin Access Control</span>
+        </div>
+        <div class="diagram-node diagram-node-highlight">
+          <span class="diagram-label">CloudFront</span>
+          <span class="diagram-detail">HTTPS, cached, invalidated on deploy</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <h2>What this setup gets you</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>No stored AWS keys</h3>
+          <p>GitHub's OIDC token is exchanged for short-lived credentials at deploy time. Nothing long-lived sits in repo secrets.</p>
+        </article>
+        <article class="card">
+          <h3>Locked-down bucket</h3>
+          <p>Public access is fully blocked on the S3 bucket. Only CloudFront, via Origin Access Control, can read objects.</p>
+        </article>
+        <article class="card">
+          <h3>Repo + environment scoped</h3>
+          <p>The IAM trust policy checks the OIDC subject against this exact repository and the <code>production</code> environment.</p>
+        </article>
+        <article class="card">
+          <h3>Automatic cache busting</h3>
+          <p>Every deploy fires a CloudFront invalidation, so visitors never see a stale build after a push.</p>
+        </article>
+        <article class="card">
+          <h3>Fails before it ships</h3>
+          <p>Broken HTML or a dead link stops the pipeline at the test stage — before anything reaches production.</p>
+        </article>
+        <article class="card">
+          <h3>Fully reproducible</h3>
+          <p>The bucket, distribution, and IAM role are all defined in Terraform — <code>apply</code> rebuilds the whole stack.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="stack" class="section stack-section">
+      <h2>Built with</h2>
+      <ul class="stack-list">
+        <li>GitHub Actions</li>
+        <li>Terraform</li>
+        <li>AWS S3</li>
+        <li>AWS CloudFront</li>
+        <li>AWS IAM · OIDC</li>
+      </ul>
+    </section>
   </main>
+
+  <footer class="footer">
+    <p>Deployed automatically &middot; last build <span id="build-info">local</span></p>
+    <a href="https://github.com/Hardikrepo/ci-cd">github.com/Hardikrepo/ci-cd</a>
+  </footer>
+
   <script src="script.js"></script>
 </body>
 </html>
