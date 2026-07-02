@@ -10,6 +10,16 @@ OIDC token for temporary AWS credentials at run time.
 
 ![Push to main, build, test, deploy, S3, CloudFront pipeline diagram](docs/pipeline-diagram.svg)
 
+## Demo
+
+Screen recording of the live site and the pipeline that ships it:
+
+https://github.com/Hardikrepo/ci-cd/releases/download/demo-video/CICD.recording.mp4
+
+<video src="https://github.com/Hardikrepo/ci-cd/releases/download/demo-video/CICD.recording.mp4" controls width="100%"></video>
+
+*(If your Markdown viewer doesn't render the player above, use the direct link.)*
+
 ## What's in this repo
 
 ```
