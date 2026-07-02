@@ -12,13 +12,8 @@ OIDC token for temporary AWS credentials at run time.
 
 ## Demo
 
-Screen recording of the live site and the pipeline that ships it:
-
-https://github.com/Hardikrepo/ci-cd/releases/download/demo-video/CICD.recording.mp4
-
-<video src="https://github.com/Hardikrepo/ci-cd/releases/download/demo-video/CICD.recording.mp4" controls width="100%"></video>
-
-*(If your Markdown viewer doesn't render the player above, use the direct link.)*
+📹 [Watch the live site and pipeline in action](https://github.com/Hardikrepo/ci-cd/releases/download/demo-video/CICD.recording.mp4)
+(screen recording, downloads/plays in-browser)
 
 ## What's in this repo
 
