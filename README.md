@@ -1,7 +1,7 @@
 # ci-cd — Static Site, GitHub Actions → AWS
 
 [![Build, Test, Deploy Static Site](https://github.com/Hardikrepo/ci-cd/actions/workflows/deploy.yml/badge.svg)](https://github.com/Hardikrepo/ci-cd/actions/workflows/deploy.yml)
-**Live:** [d1lmh2q9zjh8hr.cloudfront.net](https://d1lmh2q9zjh8hr.cloudfront.net) This URL is not active
+**Live:** [d3nifwv4s4rv3.cloudfront.net](https://d3nifwv4s4rv3.cloudfront.net)
 
 Push to `main`. Three GitHub Actions jobs run — **build**, **test**,
 **deploy** — and the site is live on CloudFront a few seconds later. No AWS
@@ -37,9 +37,16 @@ after `build` and `test` both pass.
 
 ## Architecture
 
-```
-GitHub Actions --AssumeRoleWithWebIdentity--> IAM Role --s3 sync--> S3 (private) --Origin Access Control--> CloudFront --HTTPS--> visitor
-```
+![Advanced architecture diagram: developer pushes to GitHub, triggering build/test/deploy jobs; deploy exchanges an OIDC token for an IAM role via AssumeRoleWithWebIdentity, syncs to a private S3 bucket, which CloudFront reads via Origin Access Control and serves to visitors over HTTPS; Terraform provisions and governs every AWS resource](docs/architecture-miro.svg)
+
+Six regions, left to right / top to bottom:
+
+1. **Source** — a push (or PR) against `Hardikrepo/ci-cd`.
+2. **CI/CD pipeline** — `build` → `test` → `deploy`, each gating the next (see [The pipeline](#the-pipeline)).
+3. **Identity & trust** — the GitHub OIDC provider and the IAM role it's allowed to hand credentials to.
+4. **Storage & delivery** — the private S3 bucket and the CloudFront distribution that's the only thing allowed to read it (dashed red box = the trust/security boundary).
+5. **End user** — whoever hits the CloudFront URL.
+6. **Infrastructure as code** — Terraform, which provisions and reconciles every node in regions 3–4; the dashed purple arrows show what it owns.
 
 - **No stored AWS keys.** The `deploy` job requests a GitHub OIDC token
   (`permissions: id-token: write`) and `aws-actions/configure-aws-credentials`
