@@ -1,0 +1,540 @@
+<title>ci-cd — Architecture Board</title>
+<style>
+  :root {
+    --canvas: #ffffff;
+    --dot: #e2e2e2;
+    --ink: #1a1a1a;
+    --muted: #757575;
+    --panel-bg: #ffffff;
+    --panel-border: #e6e6e6;
+    --toolbar-shadow: rgba(15, 15, 15, 0.14);
+    --accent: #4262ff;
+    --accent-ink: #ffffff;
+    --sticky-bg: #fff4b8;
+    --sticky-ink: #4a3c04;
+    --sticky-bg-2: #d7f7d0;
+    --sticky-ink-2: #1e4620;
+    --kbd-bg: rgba(0, 0, 0, 0.05);
+    --aws-navy: #232f3e;
+    --aws-navy-tint: rgba(35, 47, 62, 0.04);
+  }
+  :root[data-theme="dark"] {
+    --canvas: #16171a;
+    --dot: #2b2c30;
+    --ink: #eceef1;
+    --muted: #9a9da5;
+    --panel-bg: #232428;
+    --panel-border: #34353a;
+    --toolbar-shadow: rgba(0, 0, 0, 0.5);
+    --accent: #6e86ff;
+    --accent-ink: #0d1020;
+    --sticky-bg: #4a3c04;
+    --sticky-ink: #ffe27a;
+    --sticky-bg-2: #1e4620;
+    --sticky-ink-2: #d7f7d0;
+    --kbd-bg: rgba(255, 255, 255, 0.08);
+    --aws-navy: #b9c2d0;
+    --aws-navy-tint: rgba(185, 194, 208, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas: #16171a;
+      --dot: #2b2c30;
+      --ink: #eceef1;
+      --muted: #9a9da5;
+      --panel-bg: #232428;
+      --panel-border: #34353a;
+      --toolbar-shadow: rgba(0, 0, 0, 0.5);
+      --accent: #6e86ff;
+      --accent-ink: #0d1020;
+      --sticky-bg: #4a3c04;
+      --sticky-ink: #ffe27a;
+      --sticky-bg-2: #1e4620;
+      --sticky-ink-2: #d7f7d0;
+      --kbd-bg: rgba(255, 255, 255, 0.08);
+      --aws-navy: #b9c2d0;
+      --aws-navy-tint: rgba(185, 194, 208, 0.06);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--canvas); color: var(--ink);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  .mono { font-family: ui-monospace, "Cascadia Code", Consolas, "SFMono-Regular", monospace; }
+  button { font-family: inherit; }
+
+  /* ================= TOP BAR ================= */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 30;
+    background: var(--panel-bg); border-bottom: 1px solid var(--panel-border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px 0 10px;
+  }
+  .tb-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .miro-mark {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    background: var(--accent); color: var(--accent-ink);
+    display: grid; place-items: center; font-weight: 800; font-size: 15px;
+  }
+  .board-id { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+  .board-id .name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .board-id .name .caret { color: var(--muted); font-size: 10px; }
+  .board-id .path { font-size: 11px; color: var(--muted); }
+  .tb-sep { width: 1px; height: 26px; background: var(--panel-border); margin: 0 4px; }
+  .tb-icon-btn {
+    all: unset; width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center;
+    color: var(--muted); cursor: pointer;
+  }
+  .tb-icon-btn:hover { background: var(--kbd-bg); }
+  .tb-icon-btn svg { width: 17px; height: 17px; }
+
+  .tb-right { display: flex; align-items: center; gap: 10px; flex: none; }
+  .avatars { display: flex; align-items: center; }
+  .avatar {
+    width: 27px; height: 27px; border-radius: 50%; border: 2px solid var(--panel-bg);
+    display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff;
+    margin-left: -8px;
+  }
+  .avatar:first-child { margin-left: 0; }
+  .share-btn {
+    all: unset; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 13px;
+    padding: 7px 16px; border-radius: 8px; cursor: pointer;
+  }
+  .share-btn:hover { filter: brightness(1.06); }
+  .present-btn {
+    all: unset; font-size: 13px; font-weight: 600; color: var(--ink); border: 1px solid var(--panel-border);
+    padding: 6px 13px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .present-btn:hover { background: var(--kbd-bg); }
+
+  /* ================= LEFT TOOL RAIL ================= */
+  .rail {
+    position: fixed; left: 12px; top: 50%; transform: translateY(-50%); z-index: 25;
+    background: var(--panel-bg); border: 1px solid var(--panel-border);
+    border-radius: 14px; padding: 6px; box-shadow: 0 6px 20px var(--toolbar-shadow);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .rail button {
+    all: unset; width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center;
+    color: var(--ink); cursor: pointer; position: relative;
+  }
+  .rail button svg { width: 18px; height: 18px; }
+  .rail button:hover { background: var(--kbd-bg); }
+  .rail button.active { background: var(--accent); color: var(--accent-ink); }
+  .rail .rail-sep { height: 1px; background: var(--panel-border); margin: 4px 6px; }
+
+  /* ================= CANVAS ================= */
+  .viewport {
+    position: absolute; inset: 0; top: 52px;
+    background-image: radial-gradient(var(--dot) 1.4px, transparent 1.4px);
+    background-size: 26px 26px;
+    cursor: grab;
+  }
+  .viewport.grabbing { cursor: grabbing; }
+  .stage {
+    position: absolute; top: 0; left: 0; transform-origin: 0 0;
+    padding: 120px 140px 220px; display: flex; flex-direction: column; gap: 84px;
+    width: max-content;
+  }
+  @media (prefers-reduced-motion: no-preference) { .stage { transition: transform 0.16s ease-out; } }
+
+  /* ================= FRAME ================= */
+  .frame { position: relative; border: 1.5px dashed rgba(120,120,130,0.4); border-radius: 4px; }
+  .frame-tab {
+    position: absolute; top: -28px; left: -1.5px; display: flex; align-items: center; gap: 7px;
+    padding: 5px 12px 5px 8px; border-radius: 6px 6px 0 0; background: rgba(120,120,130,0.16); color: var(--muted);
+  }
+  .frame-tab .name { font-size: 12px; font-weight: 700; }
+  .frame-inner { padding: 30px; position: relative; }
+  .caption { margin-top: 16px; font-size: 12.5px; color: var(--muted); max-width: 680px; }
+
+  /* ================= AWS diagram surface ================= */
+  .board-card {
+    background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 6px;
+    box-shadow: 0 14px 34px var(--toolbar-shadow); line-height: 0; overflow: hidden;
+  }
+  .board-card svg { display: block; width: 100%; height: auto; }
+
+  #pipeline-frame .frame-inner { width: 1160px; }
+  #arch-frame .frame-inner { width: 1360px; }
+
+  /* ================= sticky notes ================= */
+  .sticky {
+    position: absolute; width: 172px; padding: 13px 13px 15px; border-radius: 2px;
+    box-shadow: 0 10px 22px var(--toolbar-shadow); font-size: 12px; line-height: 1.45;
+  }
+  .sticky b { display: block; font-size: 12.5px; margin-bottom: 5px; }
+  .sticky.yellow { background: var(--sticky-bg); color: var(--sticky-ink); transform: rotate(-3deg); }
+  .sticky.green { background: var(--sticky-bg-2); color: var(--sticky-ink-2); transform: rotate(2deg); }
+  #note-oidc { top: -20px; right: 190px; }
+  #note-scope { bottom: -26px; left: 60px; }
+
+  /* ================= fake collaborator cursor ================= */
+  .cursor {
+    position: absolute; z-index: 5; display: flex; align-items: flex-start; gap: 0;
+    pointer-events: none;
+  }
+  .cursor svg { width: 20px; height: 20px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }
+  .cursor .tag {
+    margin-left: 2px; margin-top: 12px; background: #ff5b7f; color: #fff; font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 0 8px 8px 8px; white-space: nowrap;
+  }
+  #cursor-priya { top: 108px; left: 905px; }
+
+  /* ================= bottom-right zoom pill ================= */
+  .zoomctl {
+    position: fixed; right: 16px; bottom: 16px; z-index: 25; display: flex; align-items: center; gap: 4px;
+    background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 10px; padding: 5px;
+    box-shadow: 0 6px 18px var(--toolbar-shadow);
+  }
+  .zoomctl button { all: unset; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; cursor: pointer; color: var(--ink); font-size: 15px; font-weight: 600; }
+  .zoomctl button:hover { background: var(--kbd-bg); }
+  .zoomctl .val { font-size: 12px; width: 42px; text-align: center; color: var(--muted); }
+  .zoomctl .fit { font-size: 14px; }
+  .zoomctl .sep { width: 1px; height: 18px; background: var(--panel-border); margin: 0 2px; }
+
+  .helpbtn {
+    position: fixed; left: 16px; bottom: 16px; z-index: 25; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 6px 18px var(--toolbar-shadow);
+    display: grid; place-items: center; color: var(--muted); font-size: 13px; font-weight: 700;
+  }
+</style>
+
+<!-- ============= TOP BAR ============= -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="miro-mark">C</div>
+    <div class="board-id">
+      <span class="name">ci-cd &#8212; Architecture <span class="caret">&#9662;</span></span>
+      <span class="path mono">Hardikrepo / docs</span>
+    </div>
+    <div class="tb-sep"></div>
+    <button class="tb-icon-btn" aria-label="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 10L3 6l4-4M3 6h11a6 6 0 010 12h-4"/></svg></button>
+    <button class="tb-icon-btn" aria-label="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 10l4-4-4-4M21 6H10a6 6 0 000 12h4"/></svg></button>
+  </div>
+  <div class="tb-right">
+    <button class="tb-icon-btn" aria-label="Comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg></button>
+    <div class="avatars">
+      <div class="avatar" style="background:#4262ff;">H</div>
+      <div class="avatar" style="background:#ff5b7f;">P</div>
+      <div class="avatar" style="background:#18a999;">+2</div>
+    </div>
+    <button class="present-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v14l11-7z"/></svg>Present</button>
+    <button class="share-btn">Share</button>
+    <button class="tb-icon-btn" aria-label="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+  </div>
+</div>
+
+<!-- ============= LEFT TOOL RAIL ============= -->
+<div class="rail">
+  <button class="active" aria-label="Select"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l6.5 17 2-7 7-2z"/></svg></button>
+  <button aria-label="Pen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4 11-11 3 3-11 11z"/><path d="M14 6l3 3"/></svg></button>
+  <button aria-label="Shapes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="9" height="9" rx="1.5"/><circle cx="16.5" cy="7.5" r="4.5"/></svg></button>
+  <button aria-label="Sticky note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M17 4v3h3"/></svg></button>
+  <button aria-label="Text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 6h14M12 6v13"/></svg></button>
+  <button aria-label="Frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3v18M3 7h18M17 21V3M21 17H3"/></svg></button>
+  <div class="rail-sep"></div>
+  <button aria-label="Upload image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5.5-5.5L4 21"/></svg></button>
+  <button aria-label="More apps"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+</div>
+
+<!-- ============= CANVAS ============= -->
+<div class="viewport" id="viewport">
+  <div class="stage" id="stage">
+
+    <!-- FRAME A: linear pipeline strip -->
+    <section class="frame" id="pipeline-frame">
+      <div class="frame-tab"><span class="name">Frame 1 &#8212; Pipeline, linear view</span></div>
+      <div class="frame-inner">
+        <div class="board-card">
+          <svg viewBox="0 0 1300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+            <title id="t1">Push to main to live on CloudFront, linear pipeline</title>
+            <desc id="d1">GitHub push triggers build, test, deploy jobs; deploy syncs to S3 and CloudFront serves the site.</desc>
+            <defs>
+              <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a8f98"/></marker>
+              <!-- AWS-style icon symbols -->
+              <g id="ic-repo"><circle cx="7" cy="6" r="2.1"/><circle cx="7" cy="18" r="2.1"/><circle cx="17" cy="12" r="2.1"/><path d="M7 8.1V15.9M7 12h6.3a3.4 3.4 0 003.2-2.2" fill="none"/></g>
+              <g id="ic-gear"><circle cx="12" cy="12" r="3.1" fill="none"/><path d="M12 3v2.4M12 18.6V21M3 12h2.4M18.6 12H21M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7" fill="none"/></g>
+              <g id="ic-check"><path d="M4 12.5l5 5L20 6.5" fill="none"/></g>
+              <g id="ic-rocket"><path d="M12 2c3 2 4.5 5.5 4.5 9 0 2-1 4-1 4l-3.5 1-3.5-1s-1-2-1-4c0-3.5 1.5-7 4.5-9z" fill="none"/><circle cx="12" cy="9" r="1.6"/><path d="M8.5 15l-2 4.5M15.5 15l2 4.5" fill="none"/></g>
+              <g id="ic-bucket"><path d="M5 8h14l-1.3 11.2a2 2 0 01-2 1.8H8.3a2 2 0 01-2-1.8L5 8z" fill="none"/><ellipse cx="12" cy="8" rx="7" ry="2.3" fill="none"/></g>
+              <g id="ic-globe"><circle cx="12" cy="12" r="8.4" fill="none"/><ellipse cx="12" cy="12" rx="3.6" ry="8.4" fill="none"/><path d="M3.8 9.4h16.4M3.8 14.6h16.4" fill="none"/></g>
+            </defs>
+
+            <g font-family="Segoe UI, sans-serif">
+              <!-- Push -->
+              <g transform="translate(20,45)">
+                <rect width="56" height="56" rx="10" fill="#414d5c"/>
+                <g transform="translate(16,16)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-repo"/></g>
+                <text x="28" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">Push</text>
+                <text x="28" y="93" text-anchor="middle" font-size="10.5" fill="#757575">main branch</text>
+              </g>
+              <line x1="96" y1="73" x2="128" y2="73" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#ar)"/>
+
+              <!-- Build -->
+              <g transform="translate(140,45)">
+                <rect width="56" height="56" rx="10" fill="#414d5c"/>
+                <g transform="translate(16,16)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-gear"/></g>
+                <text x="28" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">Build</text>
+                <text x="28" y="93" text-anchor="middle" font-size="10.5" fill="#757575">html-validate</text>
+              </g>
+              <line x1="216" y1="73" x2="248" y2="73" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#ar)"/>
+
+              <!-- Test -->
+              <g transform="translate(260,45)">
+                <rect width="56" height="56" rx="10" fill="#414d5c"/>
+                <g transform="translate(16,16)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-check"/></g>
+                <text x="28" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">Test</text>
+                <text x="28" y="93" text-anchor="middle" font-size="10.5" fill="#757575">linkinator</text>
+              </g>
+              <line x1="336" y1="73" x2="368" y2="73" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#ar)"/>
+
+              <!-- Deploy -->
+              <g transform="translate(380,45)">
+                <rect width="56" height="56" rx="10" fill="#dd344c"/>
+                <g transform="translate(16,16)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-rocket"/></g>
+                <text x="28" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">Deploy</text>
+                <text x="28" y="93" text-anchor="middle" font-size="10.5" fill="#757575">OIDC assume-role</text>
+              </g>
+              <line x1="456" y1="73" x2="488" y2="73" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#ar)"/>
+
+              <!-- S3 -->
+              <g transform="translate(500,45)">
+                <rect width="56" height="56" rx="10" fill="#7aa116"/>
+                <g transform="translate(16,16)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-bucket"/></g>
+                <text x="28" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">S3</text>
+                <text x="28" y="93" text-anchor="middle" font-size="10.5" fill="#757575">private bucket</text>
+              </g>
+              <line x1="576" y1="73" x2="608" y2="73" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#ar)"/>
+
+              <!-- CloudFront -->
+              <g transform="translate(620,45)">
+                <rect width="56" height="56" rx="10" fill="#8c4fff"/>
+                <g transform="translate(16,16)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-globe"/></g>
+                <text x="28" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">CloudFront</text>
+                <text x="28" y="93" text-anchor="middle" font-size="10.5" fill="#757575">HTTPS, cached</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <p class="caption"><b>deploy</b> only runs on a push to <code class="mono">main</code>, and only after <b>build</b> and <b>test</b> both pass. Icon colors follow the AWS Architecture Icons category palette &#8212; grey/dark for tooling, red for identity, green for storage, purple for networking.</p>
+      </div>
+    </section>
+
+    <!-- FRAME B: AWS Cloud architecture -->
+    <section class="frame" id="arch-frame">
+      <div class="frame-tab"><span class="name">Frame 2 &#8212; AWS Cloud architecture</span></div>
+      <div class="frame-inner">
+
+        <div class="sticky yellow" id="note-oidc">
+          <b>No stored keys</b>
+          <code class="mono">deploy</code> trades a GitHub OIDC token for short-lived AWS creds. Nothing long-lived, ever.
+        </div>
+        <div class="sticky green" id="note-scope">
+          <b>Scoped tight</b>
+          Trust policy only accepts <span class="mono">sub == repo:Hardikrepo/ci-cd:environment:production</span>.
+        </div>
+        <div class="cursor" id="cursor-priya">
+          <svg viewBox="0 0 20 20"><path d="M2 1l16 6.5-6.2 2.3L9.5 17 2 1z" fill="#ff5b7f"/></svg>
+          <span class="tag">Priya</span>
+        </div>
+
+        <div class="board-card">
+          <svg viewBox="0 0 1300 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t2 d2">
+            <title id="t2">AWS Cloud architecture for ci-cd</title>
+            <desc id="d2">GitHub Actions deploy job assumes an IAM role via OIDC, syncs to a private S3 bucket, read only by CloudFront via Origin Access Control, served to visitors over HTTPS. Terraform provisions the AWS Cloud resources.</desc>
+            <defs>
+              <marker id="a-grey" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a8f98"/></marker>
+              <marker id="a-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dd344c"/></marker>
+              <marker id="a-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7aa116"/></marker>
+              <marker id="a-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8c4fff"/></marker>
+              <marker id="a-tf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#844fba"/></marker>
+            </defs>
+
+            <!-- ===== AWS Cloud boundary ===== -->
+            <rect x="430" y="60" width="620" height="420" rx="4" fill="#232f3e0A" stroke="#232f3e" stroke-width="1.6"/>
+            <path d="M430 84 h620" stroke="#232f3e" stroke-width="1.6"/>
+            <g transform="translate(444,64)">
+              <rect width="15" height="15" rx="3" fill="#232f3e"/>
+              <path d="M3 8.5c0-2.8 2.2-5 5-5M12 6.5c0 2.8-2.2 5-5 5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+            </g>
+            <text x="466" y="76" font-size="12.5" font-weight="700" fill="#232f3e">AWS Cloud</text>
+
+            <!-- region label -->
+            <rect x="452" y="100" width="580" height="360" rx="4" fill="none" stroke="#8a8f98" stroke-width="1.2" stroke-dasharray="4 4"/>
+            <text x="464" y="116" font-size="10.5" fill="#757575" letter-spacing="0.03em">us-east-1</text>
+
+            <!-- ===== GitHub (outside cloud) ===== -->
+            <text x="30" y="52" font-size="11.5" font-weight="700" fill="#757575" letter-spacing="0.04em">SOURCE + CI</text>
+            <g font-family="Segoe UI, sans-serif">
+              <g transform="translate(30,70)">
+                <rect width="52" height="52" rx="9" fill="#414d5c"/>
+                <g transform="translate(14,14)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" fill="none"><circle cx="6.5" cy="5.5" r="2"/><circle cx="6.5" cy="16.5" r="2"/><circle cx="15.5" cy="11" r="2"/><path d="M6.5 7.5v7M6.5 11h5.8a3 3 0 002.9-2"/></g>
+                <text x="26" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a1a">Repo</text>
+              </g>
+              <line x1="82" y1="96" x2="112" y2="96" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#a-grey)"/>
+
+              <g transform="translate(124,70)">
+                <rect width="52" height="52" rx="9" fill="#414d5c"/>
+                <g transform="translate(14,14)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" fill="none"><circle cx="12" cy="12" r="3.4"/><path d="M12 3.5v2.4M12 20.1v-2.4M3.5 12h2.4M20.1 12h-2.4M6.2 6.2l1.7 1.7M16.1 16.1l1.7 1.7M17.8 6.2l-1.7 1.7M7.9 16.1l-1.7 1.7"/></g>
+                <text x="26" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a1a">Build</text>
+              </g>
+              <line x1="176" y1="96" x2="206" y2="96" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#a-grey)"/>
+
+              <g transform="translate(218,70)">
+                <rect width="52" height="52" rx="9" fill="#414d5c"/>
+                <g transform="translate(14,14)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M4 12.5l5 5L20 6.5"/></g>
+                <text x="26" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a1a">Test</text>
+              </g>
+              <line x1="270" y1="96" x2="300" y2="96" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#a-grey)"/>
+
+              <g transform="translate(312,70)">
+                <rect width="52" height="52" rx="9" fill="#dd344c"/>
+                <g transform="translate(14,14)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 2.5c2.7 1.8 4 5 4 8 0 1.8-.9 3.6-.9 3.6l-3.1 0.9-3.1-0.9S8 12.3 8 10.5c0-3 1.3-6.2 4-8z"/><circle cx="12" cy="9" r="1.4" fill="#fff" stroke="none"/><path d="M9 15.5l-1.8 4M15 15.5l1.8 4"/></g>
+                <text x="26" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a1a">Deploy</text>
+              </g>
+            </g>
+
+            <text x="152" y="164" text-anchor="middle" font-size="10" fill="#757575" font-style="italic">push / PR</text>
+
+            <!-- deploy -> OIDC provider (dashed, exchanges token) -->
+            <path d="M338,122 C 370,150 410,168 452,178" fill="none" stroke="#dd344c" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#a-red)"/>
+            <rect x="330" y="150" width="150" height="18" rx="9" fill="#ffffff" stroke="#dd344c" stroke-width="1" opacity="0.95"/>
+            <text x="405" y="163" text-anchor="middle" font-size="9.5" fill="#dd344c" font-family="ui-monospace, Consolas, monospace">AssumeRoleWithWebIdentity</text>
+
+            <!-- ===== Identity cluster ===== -->
+            <text x="474" y="150" font-size="10.5" font-weight="700" fill="#757575" letter-spacing="0.03em">IDENTITY</text>
+            <g font-family="Segoe UI, sans-serif">
+              <g transform="translate(474,166)">
+                <rect width="60" height="60" rx="10" fill="#dd344c"/>
+                <g transform="translate(17,17)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="8.5" cy="8.5" r="4.2"/><path d="M11.5 11.5L21 21M15.5 17l2.7-2.7M19 20.5l2.7-2.7"/></g>
+                <text x="30" y="78" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1a1a1a">OIDC Provider</text>
+              </g>
+              <line x1="534" y1="196" x2="562" y2="196" stroke="#dd344c" stroke-width="1.8" marker-end="url(#a-red)"/>
+              <g transform="translate(574,166)">
+                <rect width="60" height="60" rx="10" fill="#dd344c"/>
+                <g transform="translate(17,17)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4.5" y="9" width="15" height="12" rx="2.5"/><path d="M7.5 9V6.5a4.5 4.5 0 019 0V9"/></g>
+                <text x="30" y="78" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1a1a1a">IAM Role</text>
+              </g>
+            </g>
+
+            <!-- IAM Role -> S3 (permission) -->
+            <path d="M634,196 C 700,196 720,240 720,280" fill="none" stroke="#dd344c" stroke-width="1.8" marker-end="url(#a-red)"/>
+            <rect x="662" y="222" width="118" height="18" rx="9" fill="#ffffff" stroke="#dd344c" stroke-width="1" opacity="0.95"/>
+            <text x="721" y="235" text-anchor="middle" font-size="9.5" fill="#dd344c" font-family="ui-monospace, Consolas, monospace">s3 sync --delete</text>
+
+            <!-- security boundary around storage+delivery -->
+            <rect x="680" y="290" width="330" height="150" rx="10" fill="none" stroke="#dd344c" stroke-width="1.3" stroke-dasharray="3 4" opacity="0.85"/>
+
+            <text x="695" y="278" font-size="10.5" font-weight="700" fill="#757575" letter-spacing="0.03em">STORAGE + DELIVERY</text>
+            <g font-family="Segoe UI, sans-serif">
+              <g transform="translate(700,300)">
+                <rect width="64" height="64" rx="10" fill="#7aa116"/>
+                <g transform="translate(18,18)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M4 6.5h20l-2 15.4a2.6 2.6 0 01-2.6 2.3H8.6A2.6 2.6 0 016 21.9L4 6.5z"/><ellipse cx="14" cy="6.5" rx="10" ry="3"/></g>
+                <text x="32" y="82" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1a1a1a">S3 (private)</text>
+                <text x="32" y="97" text-anchor="middle" font-size="9.5" fill="#757575">public access blocked</text>
+              </g>
+              <line x1="764" y1="332" x2="892" y2="332" stroke="#8c4fff" stroke-width="1.8" marker-end="url(#a-purple)"/>
+              <rect x="778" y="323" width="100" height="18" rx="9" fill="#ffffff" stroke="#8c4fff" stroke-width="1"/>
+              <text x="828" y="336" text-anchor="middle" font-size="9" fill="#8c4fff" font-family="ui-monospace, Consolas, monospace">origin access control</text>
+
+              <g transform="translate(904,300)">
+                <rect width="64" height="64" rx="10" fill="#8c4fff"/>
+                <g transform="translate(18,18)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="14" cy="14" r="9.5"/><ellipse cx="14" cy="14" rx="4" ry="9.5"/><path d="M4.5 10.5h19M4.5 17.5h19"/></g>
+                <text x="32" y="82" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1a1a1a">CloudFront</text>
+                <text x="32" y="97" text-anchor="middle" font-size="9.5" fill="#757575">HTTPS edge cache</text>
+              </g>
+            </g>
+
+            <!-- CloudFront -> Visitor -->
+            <line x1="1050" y1="332" x2="1108" y2="332" stroke="#8a8f98" stroke-width="1.8" marker-end="url(#a-grey)"/>
+            <rect x="1058" y="323" width="46" height="18" rx="9" fill="#ffffff" stroke="#8a8f98" stroke-width="1"/>
+            <text x="1081" y="336" text-anchor="middle" font-size="9" fill="#4a4a4a" font-family="ui-monospace, Consolas, monospace">HTTPS</text>
+
+            <text x="1116" y="278" font-size="10.5" font-weight="700" fill="#757575" letter-spacing="0.03em">END USER</text>
+            <g transform="translate(1116,300)" font-family="Segoe UI, sans-serif">
+              <rect width="60" height="60" rx="10" fill="#414d5c"/>
+              <g transform="translate(16,17)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="1" y="2" width="26" height="19" rx="2.5"/><path d="M1 7.5h26"/><circle cx="5.4" cy="4.6" r="0.7" fill="#fff" stroke="none"/><circle cx="8" cy="4.6" r="0.7" fill="#fff" stroke="none"/></g>
+              <text x="30" y="78" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1a1a1a">Visitor</text>
+            </g>
+
+            <!-- ===== Terraform (bottom, provisions everything in the AWS Cloud box) ===== -->
+            <text x="30" y="470" font-size="11.5" font-weight="700" fill="#757575" letter-spacing="0.04em">INFRASTRUCTURE AS CODE</text>
+            <g transform="translate(30,486)" font-family="Segoe UI, sans-serif">
+              <rect width="66" height="66" rx="11" fill="#844fba"/>
+              <g transform="translate(15,15)" fill="#fff"><rect x="0" y="0" width="14" height="14" rx="2"/><rect x="17" y="0" width="14" height="14" rx="2"/><rect x="8.5" y="17" width="14" height="14" rx="2"/></g>
+              <text x="33" y="86" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a1a">Terraform</text>
+              <text x="33" y="101" text-anchor="middle" font-size="9.5" fill="#757575">terraform/main.tf</text>
+            </g>
+            <path d="M96,505 C 250,505 380,320 474,222" fill="none" stroke="#844fba" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#a-tf)"/>
+            <path d="M96,515 C 300,540 550,470 700,340" fill="none" stroke="#844fba" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#a-tf)"/>
+            <path d="M96,525 C 350,565 700,510 904,340" fill="none" stroke="#844fba" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#a-tf)"/>
+            <text x="180" y="558" font-size="10.5" fill="#844fba" font-style="italic">one `terraform apply` provisions &amp; reconciles every AWS resource above</text>
+
+            <!-- legend -->
+            <g font-family="Segoe UI, sans-serif" font-size="10.5" fill="#757575">
+              <text x="1090" y="470" font-weight="700" fill="#757575" font-size="10.5" letter-spacing="0.03em">LEGEND</text>
+              <rect x="1090" y="480" width="11" height="11" rx="2" fill="#414d5c"/><text x="1106" y="489">Tooling</text>
+              <rect x="1090" y="498" width="11" height="11" rx="2" fill="#dd344c"/><text x="1106" y="507">Identity</text>
+              <rect x="1090" y="516" width="11" height="11" rx="2" fill="#7aa116"/><text x="1106" y="525">Storage</text>
+              <rect x="1090" y="534" width="11" height="11" rx="2" fill="#8c4fff"/><text x="1106" y="543">Delivery</text>
+              <rect x="1090" y="552" width="11" height="11" rx="2" fill="#844fba"/><text x="1106" y="561">IaC</text>
+            </g>
+          </svg>
+        </div>
+        <p class="caption">Icon squares follow the AWS Architecture Icons category palette (grey tooling, red identity, green storage, purple networking) inside a navy-bordered <b>AWS Cloud</b> boundary &#8212; the same convention AWS's own reference diagrams use. Dashed red = trust boundary; dashed purple = what Terraform provisions.</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============= BOTTOM CONTROLS ============= -->
+<div class="helpbtn">?</div>
+<div class="zoomctl">
+  <button id="zoom-out" aria-label="Zoom out">&minus;</button>
+  <span class="val mono" id="zoom-val">100%</span>
+  <button id="zoom-in" aria-label="Zoom in">+</button>
+  <span class="sep"></span>
+  <button class="fit" id="zoom-reset" aria-label="Zoom to fit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3H4v5M15 3h5v5M9 21H4v-5M15 21h5v-5"/></svg></button>
+</div>
+
+<script>
+  (function () {
+    var viewport = document.getElementById('viewport');
+    var stage = document.getElementById('stage');
+    var zoomVal = document.getElementById('zoom-val');
+    var scale = 0.62, x = 0, y = 0;
+    var dragging = false, lastX = 0, lastY = 0;
+
+    function apply() {
+      stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
+      zoomVal.textContent = Math.round(scale * 100) + '%';
+    }
+    function setScale(next) { scale = Math.min(1.6, Math.max(0.3, next)); apply(); }
+
+    document.getElementById('zoom-in').addEventListener('click', function () { setScale(scale + 0.12); });
+    document.getElementById('zoom-out').addEventListener('click', function () { setScale(scale - 0.12); });
+    document.getElementById('zoom-reset').addEventListener('click', function () { scale = 0.62; x = 0; y = 0; apply(); });
+
+    viewport.addEventListener('mousedown', function (e) {
+      dragging = true; lastX = e.clientX; lastY = e.clientY; viewport.classList.add('grabbing');
+    });
+    window.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      x += e.clientX - lastX; y += e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY; apply();
+    });
+    window.addEventListener('mouseup', function () { dragging = false; viewport.classList.remove('grabbing'); });
+
+    viewport.addEventListener('wheel', function (e) {
+      if (!e.ctrlKey) return;
+      e.preventDefault(); setScale(scale - e.deltaY * 0.0015);
+    }, { passive: false });
+
+    apply();
+  })();
+</script>

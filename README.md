@@ -46,6 +46,8 @@ after `build` and `test` both pass.
 
 ![Advanced architecture diagram: developer pushes to GitHub, triggering build/test/deploy jobs; deploy exchanges an OIDC token for an IAM role via AssumeRoleWithWebIdentity, syncs to a private S3 bucket, which CloudFront reads via Origin Access Control and serves to visitors over HTTPS; Terraform provisions and governs every AWS resource](docs/architecture-miro.svg)
 
+🖱️ [Open as an interactive Miro-style board](docs/board.html) — pannable/zoomable, drawn with the AWS Architecture Icons palette.
+
 Six regions, left to right / top to bottom:
 
 1. **Source** — a push (or PR) against `Hardikrepo/ci-cd`.
