@@ -44,18 +44,19 @@ after `build` and `test` both pass.
 
 ## Architecture
 
-![Advanced architecture diagram: developer pushes to GitHub, triggering build/test/deploy jobs; deploy exchanges an OIDC token for an IAM role via AssumeRoleWithWebIdentity, syncs to a private S3 bucket, which CloudFront reads via Origin Access Control and serves to visitors over HTTPS; Terraform provisions and governs every AWS resource](docs/architecture-miro.svg)
+![AWS architecture diagram, drawn in the AWS Architecture Icons style: GitHub Repo triggers Build, Test, Deploy; Deploy exchanges an OIDC token for an IAM role via AssumeRoleWithWebIdentity inside the AWS Cloud boundary, syncs to a private S3 bucket, which CloudFront reads via Origin Access Control and serves to visitors over HTTPS; Terraform provisions every resource inside the AWS Cloud boundary](docs/architecture-miro.svg)
 
 🖱️ [Open as an interactive Miro-style board](docs/board.html) — pannable/zoomable, drawn with the AWS Architecture Icons palette.
 
-Six regions, left to right / top to bottom:
+🔗 [Open the live editable board on Miro](https://miro.com/app/board/uXjVH-baicM=/) — same diagram, plus a second frame in a dark theme. (Private board — ask for access if the link 403s.)
 
-1. **Source** — a push (or PR) against `Hardikrepo/ci-cd`.
-2. **CI/CD pipeline** — `build` → `test` → `deploy`, each gating the next (see [The pipeline](#the-pipeline)).
-3. **Identity & trust** — the GitHub OIDC provider and the IAM role it's allowed to hand credentials to.
-4. **Storage & delivery** — the private S3 bucket and the CloudFront distribution that's the only thing allowed to read it (dashed red box = the trust/security boundary).
-5. **End user** — whoever hits the CloudFront URL.
-6. **Infrastructure as code** — Terraform, which provisions and reconciles every node in regions 3–4; the dashed purple arrows show what it owns.
+Five groups, left to right:
+
+1. **Source + CI** — a push (or PR) against `Hardikrepo/ci-cd` runs `build` → `test` → `deploy`, each gating the next (see [The pipeline](#the-pipeline)).
+2. **Identity** *(inside the AWS Cloud boundary)* — the GitHub OIDC provider and the IAM role it's allowed to hand credentials to.
+3. **Storage + delivery** *(inside the AWS Cloud boundary)* — the private S3 bucket and the CloudFront distribution that's the only thing allowed to read it (dashed red box = the trust/security boundary).
+4. **End user** — whoever hits the CloudFront URL.
+5. **Infrastructure as code** — Terraform, which provisions and reconciles every resource inside the AWS Cloud boundary; the dashed purple arrows show what it owns.
 
 - **No stored AWS keys.** The `deploy` job requests a GitHub OIDC token
   (`permissions: id-token: write`) and `aws-actions/configure-aws-credentials`
