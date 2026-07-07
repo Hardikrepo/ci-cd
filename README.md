@@ -42,22 +42,13 @@ docs/pipeline-diagram.svg      the diagram above
 `deploy` never runs on a pull request — only on a push to `main`, and only
 after `build` and `test` both pass.
 
-This is a small pipeline, but the credential model is the part worth paying
-attention to. Most CI/CD-to-cloud tutorials still reach for a long-lived IAM
-user access key stashed in a repo secret — a credential that outlives every
-job it's used in, works from any machine that has it, and shows up in every
-breach postmortem about leaked CI secrets. GitHub's OIDC provider flips that:
-each workflow run mints a token that's valid for minutes, scoped to exactly
-one repo and one environment, and never touches disk as a long-lived secret.
-The trade-off is that debugging trust-policy mismatches (see
-[Gotchas](#gotchas-hit-while-building-this-so-you-dont-have-to)) requires
-understanding OIDC's claim structure instead of just rotating a key — a
-worthwhile trade for a credential that can't be exfiltrated because it never
-really exists past the run that requested it.
-
 ## Architecture
 
 ![AWS architecture diagram, drawn in the AWS Architecture Icons style: GitHub Repo triggers Build, Test, Deploy; Deploy exchanges an OIDC token for an IAM role via AssumeRoleWithWebIdentity inside the AWS Cloud boundary, syncs to a private S3 bucket, which CloudFront reads via Origin Access Control and serves to visitors over HTTPS; Terraform provisions every resource inside the AWS Cloud boundary](docs/architecture-miro.svg)
+
+🖱️ [Open as an interactive Miro-style board](docs/board.html) — pannable/zoomable, drawn with the AWS Architecture Icons palette.
+
+🔗 [Open the live editable board on Miro](https://miro.com/app/board/uXjVH-baicM=/) — same diagram, plus a second frame in a dark theme. (Private board — ask for access if the link 403s.)
 
 Five groups, left to right:
 
